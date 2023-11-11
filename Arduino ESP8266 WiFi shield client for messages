@@ -1,5 +1,5 @@
 /*
-This sketch provide a way to send messages to a server via a wifi shield ESP8266
+This sketch provide a way to send messages to a windows server via a wifi shield ESP8266
 
 Before uploading the sketch, close the serial monitor, set the board to NodeMCU 1.0, put switch 1 and 2 to off
 and 3 and 4 to on on the wifi shield. The RX pin of arduino to RX pin of the shield and Tx to Tx.
