@@ -1,8 +1,13 @@
 /*
- Before compiling and running the TCP Server:
+ The program is useful to create a server on a windows machine in order to receive messages
+ from an arduino wifi shield.
+  
+   Before compiling and running the TCP Server:
  * Link the ws2_32.lib library in Run->Set Project Conf->Customised
  ->Linker->Add library: C:\MinGW\lib\libws2_32
- 
+ * Set the server PORT_NUMBER. It have to be the same on the shield sketch.
+  
+ * After compilation and before running the windows firewall must be set to allow the program to run on public networks.
  */
 
 #include <stdio.h>
