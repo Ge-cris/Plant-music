@@ -1,6 +1,6 @@
 /*
- The program is useful to create a server on a windows machine in order to receive messages
- from an arduino wifi shield.
+ The program is useful to create a server on a windows machine in order to receive data
+ from an ESP wifi shield and save them to a .txt file.
   
    Before compiling and running the TCP Server:
  * Link the ws2_32.lib library in Run->Set Project Conf->Customised
@@ -14,7 +14,7 @@
 #include <winsock2.h>
 
 #define PORT_NUMBER 12345
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 254
 
 int main() {
     WSADATA wsa;
@@ -45,7 +45,8 @@ int main() {
         printf("Bind failed");
         return 1;
     }
-    for(;;){
+
+for(;;){
     // Listen
     listen(server_fd, 3);
 
@@ -57,13 +58,24 @@ int main() {
         break;
     }
 
-    // Receive data from the client (Arduino)
+    // Received data from the client (Arduino ->ESP shield)
     if ((recv_size = recv(new_socket, buffer, BUFFER_SIZE, 0)) == SOCKET_ERROR) {
         printf("Receive failed");
     }
-
-    printf("Received data: %s\n", buffer);
+    printf("Received size = %d\n", recv_size);
+    char message[recv_size];
+    FILE* fp;
+    
+    for (int i=0; i<recv_size; i++){
+        message[i]=buffer[i];
     }
+    message[recv_size]='\0';
+    fp = fopen("data_received.txt", "ab");
+    fwrite (message, 1, recv_size, fp);
+    fclose(fp);
+    printf("Received data:\n%s\n", message);
+    
+}
     closesocket(new_socket);
     closesocket(server_fd);
     WSACleanup();
