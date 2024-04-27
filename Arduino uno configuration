@@ -1,0 +1,27 @@
+/* A sketch for arduino uno to read an analog value and print it via serial UART*/
+
+#include <SPI.h>
+
+int analogPin = A0; // amplifier Vout connected to arduino analog pin 0 and GND to GND
+int val = 0;  // variable to store the read value
+
+
+void setup() {
+  Serial.begin(115200);           //  setup serial
+  delay(5000);
+  //Serial.println("Initializing wifi shield...");
+  //Serial.println("initialization done.");
+}
+
+void loop() {
+  //avoid serial write if buffer is full
+  //arduino serial buffer 64 bytes
+  //max number of int values that can be stored on serial buffer is 64/sizeof(int)
+  while(Serial.availableForWrite() < 63){ 
+    val = analogRead(analogPin);
+    Serial.println(val);
+    delay(100);
+  }
+  if(Serial.availableForWrite() < 64)
+    delay(100);
+}
