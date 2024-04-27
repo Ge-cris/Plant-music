@@ -7,11 +7,11 @@ The IP address and the port number need to be the one from the server.
 */
 #include <ESP8266WiFi.h>
 
-const char* ssid = "Politia Romana";
-const char* password = "20102010";
+const char* ssid = "XXXXXXXX"; //your router SSID
+const char* password = "XXXXXXXX"; / your router password
 
 WiFiClient client;
-// Set the IP and port of the PC
+// Set the IP and port of the PC server
 const char* server = "192.168.100.26";
 const int port = 12345;
 
