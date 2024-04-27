@@ -50,7 +50,7 @@ void setup() {
   // Connect to server
   if (client.connect(server, port)) {
     //Serial.println("Connected to server");
-    client.println("Conection started");
+    //client.println("Conection started");
     client.stop();
   } else {
     Serial.println("Connection failed");
@@ -73,7 +73,7 @@ if (Serial.available() > 0){
   } else {
     //Serial.println("Connection failed");
     client.connect(server, port);
-    client.println("No data received on serial connection");
+    //client.println("No data received on serial connection");
     client.stop();
     
   }
