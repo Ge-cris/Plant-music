@@ -1,40 +1,55 @@
-/*
-This sketch provide a way to send messages to a windows server via a wifi shield ESP8266
 
-Before uploading the sketch, close the serial monitor, set the board to NodeMCU 1.0, put switch 1 and 2 to off
-and 3 and 4 to on on the wifi shield. The RX pin of arduino to RX pin of the shield and Tx to Tx.
-The IP address and the port number need to be the one from the server.
+/*
+    This sketch use ESP8266 Wifi shield to read an int from arduino uno 
+    and establishes a TCP connection with a win PC server in order to send the read int via Wifi.
+    
+    Before uploading the sketch, select the NodeMCU 1.0 (ESP-12E Module) from Tools->Board
+    and Port->ComX (Arduino UNO) and on the shield put DIP switches 1 and 2 off and 3 and 4 on.
+    Rx pin from arduino have to be connected to Rx pin from the shield and Tx to Tx.
+    Upload speed: "115200"
+    Arduino must have an empty setup() and loop() sketch.
+    The host IP address and the port number need to be the one from the server.
+    Please close any serial monitor in IDE before uploading the sketch in order to avoid serial transmition error.
+    
+    After uploading the sketch you have to swithch the DIP switches 1 and 2 to on and 3 and 4 to off
+    in order to connect the arduino serial UART to the shield serial UART. This means the serial ports Rx and TX
+    will be crossed Rx->Tx and Tx->Rx by the switches 1 and 2.
+
 */
+ 
 #include <ESP8266WiFi.h>
 
-const char* ssid = "XXXXXXXX"; //your router SSID
-const char* password = "XXXXXXXX"; / your router password
+const char* ssid = "XXXXXXXX"; // your router SSID
+const char* password = "XXXXXXXX"; //your router password
 
 WiFiClient client;
-// Set the IP and port of the PC server
+// Set the IP and port of the PC
 const char* server = "192.168.100.26";
 const int port = 12345;
+
+char buffer[256]; //serial buffer size 256 bytes
 
 void setup() {
   Serial.begin(115200);
   delay(10);
 
-  // Connect to Wi-Fi
+  /* Connect to Wi-Fi
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
+  */
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
+    //Serial.print(".");
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
+  //Serial.println("");
+  //Serial.println("WiFi connected");
 
   // Connect to server
   if (client.connect(server, port)) {
-    Serial.println("Connected to server");
+    //Serial.println("Connected to server");
     client.println("Conection started");
     client.stop();
   } else {
@@ -43,12 +58,24 @@ void setup() {
 }
 
 void loop() {
-if (client.connect(server, port)) {
-    Serial.println("Connected to server");
-    client.println("Hello from arduino!");
+//Serial.println("Connecting to server");
+if (Serial.available() > 0){ 
+    int i =0;
+    while (Serial.available() > 0 && i<255)
+      buffer[i++] = Serial.read();
+    buffer[i] = '\0';
+   
+    client.connect(server, port);
+    client.println(buffer);
     client.stop();
+    //delay(1000);
+    
   } else {
-    Serial.println("Connection failed");
+    //Serial.println("Connection failed");
+    client.connect(server, port);
+    client.println("No data received on serial connection");
+    client.stop();
+    
   }
-delay(10000);
+delay(1000);
 }
