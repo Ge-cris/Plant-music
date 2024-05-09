@@ -1,0 +1,144 @@
+/*
+ The program is useful to create a server on a windows machine in order to receive data
+ from an arduino wifi shield and save them to a .txt file.
+  
+   Before compiling and running the TCP Server:
+ * Link the ws2_32.lib library in Run->Set Project Conf->Customised
+ ->Linker->Add library: C:\MinGW\lib\libws2_32
+ * Set the server PORT_NUMBER. It have to be the same on the shield sketch.
+  
+ * After compilation and before running the windows firewall must be set to allow the program to run on public networks.
+ */
+
+#include <stdio.h>
+#include <winsock2.h>
+#include <math.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
+#include <string.h>
+#include <errno.h>
+#include <conio.h>
+
+#include "wavfile.h"
+
+#define PORT_NUMBER 12345
+#define BUFFER_SIZE 254
+const int NUM_SAMPLES = (WAVFILE_SAMPLES_PER_SECOND*2);
+
+// Function to wrap value within a specified range
+int wrap(int value, int min, int max) {
+    int range = max - min + 1;
+    return (value - min + range) % range + min;
+}
+int main() {
+    WSADATA wsa;
+    SOCKET server_fd, new_socket;
+    struct sockaddr_in server, client;
+    int c, recv_size;
+    char buffer[BUFFER_SIZE];
+    
+    short waveform[NUM_SAMPLES];
+    int frequency;
+    short volume = 32000;
+    unsigned length = NUM_SAMPLES;
+    bool vol_slider;
+    unsigned short noise_amp = 3;
+    FILE * f;
+    int samples=0;
+
+    // Initialize Winsock
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        printf("WSAStartup failed");
+        return 1;
+    }
+
+    // Create socket
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
+        printf("Socket creation failed");
+        return 1;
+    }
+
+    // Prepare the sockaddr_in structure
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons(PORT_NUMBER);
+
+    // Bind
+    if (bind(server_fd, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR) {
+        printf("Bind failed");
+        return 1;
+    }
+    
+f = wavfile_open("sound.wav");
+    if(!f){
+        printf("couldn't open sound.wav for writing: %s",strerror(errno));
+	return 1;
+    }
+
+for(;;){
+    // Listen
+    listen(server_fd, 3);
+
+    printf("Waiting for connections...\n");
+
+    c = sizeof(struct sockaddr_in);
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&client, &c)) == INVALID_SOCKET) {
+        printf("Accept failed");
+        break;
+    }
+
+    // Received data from the client (Arduino ->ESP shield)
+    if ((recv_size = recv(new_socket, buffer, BUFFER_SIZE, 0)) == SOCKET_ERROR) {
+        printf("Receive failed");
+    }
+    printf("Received size = %d\n", recv_size);
+    printf("Received data:\n");
+    
+    //convertind the string buffer to int values
+    int val;
+    char str_val[4];    
+    for(int i=0, j=0; i<= recv_size; i++){
+        if(buffer[i] == '\n'){
+            str_val[j]='\0';
+            j=0;
+            val = atoi(str_val);
+            frequency = wrap(val, 200, 600);
+            printf("%d\n", val);
+            //create the wave note
+            for(int l=0; l<length; l++){
+		double t = (double) l / WAVFILE_SAMPLES_PER_SECOND;
+                if(l%2 == 0)
+                    waveform[l] = volume*sin(frequency*t*2*M_PI);
+                else{
+                    waveform[l] = volume*sin((frequency+noise_amp)*t*2*M_PI);
+                
+                    if(volume>1000 && vol_slider==0)        //if the volume is high
+                        volume -=2;                         //lower the volume
+                    else if(volume<=1000 && vol_slider==0)  //if the volume reached the bottom
+                        vol_slider = 1;                     //move the volume slider towards top
+                    else if(volume<32000 && vol_slider==1)  //if the volume is low
+                        volume +=2;                         //increase the volume
+                    else if(volume>=32000 && vol_slider==1) //if the volume reached the top
+                        vol_slider = 1;                     //move the volume slider towards bottom
+                }
+            }
+            wavfile_write(f,waveform,length);
+        }
+        else{
+            str_val[j] = buffer[i];
+            j++;
+        }
+        
+    }
+    samples++;
+    if(samples == 10){
+        wavfile_close(f);
+        closesocket(new_socket);
+        closesocket(server_fd);
+        WSACleanup();
+        return 0;
+    }
+}
+    //return 0;
+}
