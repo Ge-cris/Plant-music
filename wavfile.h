@@ -1,5 +1,5 @@
 /*
-*Wavfile library
+ * Library for wavfile creation
 */
 
 #ifndef WAVFILE_H
